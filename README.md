@@ -120,7 +120,7 @@ configure work with docker
 ```
 
 add following script and run and check console.    
-```json
+```Jenkins
 pipeline {
     agent any
 
@@ -151,7 +151,7 @@ for above script it will create two "Workspace"s.
 ```
 
  for reuse workspaces(workspace synchronisation)   
- ```json 
+ ```Jenkins 
     docker {
         image 'node:18-alpine'
         reuseNode true # add here  
