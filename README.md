@@ -45,3 +45,62 @@ $ sudo kill -9 <PID>
 # restart jenkins   
 $ sudo systemctl restart jenkins
 ```
+
+features on jenkins    
+Dashboard>Manage Jenkins>Configure System  : pleace to configure new server (like sonar-cube)   
+Dashboard>Manage Jenkins>Global Tool Configuration  : pleace to configure new tools (like jdk )   
+Dashboard>Manage Jenkins>Manage Plugins  : pleace to add/remove/update plugins and after added it will showing "Global Tool Configuration" section.      
+Dashboard>Manage Jenkins>Global Tool Configuration  : pleace to configure new tools (like jdk )   
+Dashboard>Manage Jenkins>Manage Nodes and Clouds  :      
+
+
+install following plugins   
+1. Eclipse Temurin installer by searching 'JDK'
+2. Docker by searching 'docker'
+3.  OWASP Dependency-Check  by searching 'OWASP'   
+
+
+```bash
+sudo apt update
+sudo apt install maven -y
+mvn -version
+```
+
+after install docker into vps   
+```bash
+$ suoo systemctl restart docker
+$ sudo usermod -aG docker $USER
+$ sudo newgrp docker
+$ sudo chmod 666 /var/run/docker.sock
+$ sudo systemctl restart docker  
+```
+
+Jenkins script   
+```Jenkins
+pipeline {
+    agent any 
+    tools {
+        jdk 'jdk'
+        maven 'maven'
+    }
+
+    stages {
+        stage('Git Checkout') {
+            steps {
+                git branch: 'main', changelog: false, credentialsId: 'coreset_token', poll: false, url: 'https://github.com/jaiswaladi246/Ekart.git'
+            }
+        }
+        stage('COMPILE') {
+            steps {
+                sh "mvn clean compile -DskipTests=true"
+            }
+        }
+        stage('OWASP Scan') {
+            steps {
+                dependencyCheck additionalArguments: '--scan ./', odcInstallation: 'DP'
+                dependencyCheckPublisher pattern: '**/dependency-check-report.xml'
+            }
+        }
+    }
+}
+```
