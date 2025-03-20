@@ -75,6 +75,11 @@ $ sudo chmod 666 /var/run/docker.sock
 $ sudo systemctl restart docker  
 ```
 
+run sonar-qube locally   
+```bash
+$ docker run -d --name sonar -p 9000:9000 sonarqube:lts-community
+```
+
 Jenkins script   
 ```Jenkins
 pipeline {
