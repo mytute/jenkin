@@ -109,3 +109,73 @@ pipeline {
     }
 }
 ```
+
+```bash
+pipeline {
+    agent any 
+    tools {
+        jdk 'jdk'
+        maven 'maven'
+    }
+    
+    environment {
+        SCANNER_HOME=tool 'sonar-scanner'
+    }
+
+    stages {
+        stage('Git Checkout') {
+            steps {
+                git branch: 'main', changelog: false, credentialsId: 'coreset_token', poll: false, url: 'https://github.com/jaiswaladi246/Ekart.git'
+            }
+        }
+        stage('COMPILE') {
+            steps {
+                sh "mvn clean compile -DskipTests=true"
+            }
+        }
+        stage('OWASP Scan') {
+            steps {
+                dependencyCheck additionalArguments: '--scan ./', odcInstallation: 'DP'
+                dependencyCheckPublisher pattern: '**/dependency-check-report.xml'
+            }
+        }
+        stage('Sonarqube') {
+            steps {
+                withSonarQubeEnv('sonar-server') {
+                    sh ''' 
+                    $SCANNER_HOME/bin/sonar-scanner \
+                    -Dsonar.projectName=Shopping-Cart \
+                    -Dsonar.java.binaries=target/classes \
+                    -Dsonar.projectKey=Shopping-Cart
+                    '''
+                }
+            }
+        }
+
+    }
+}
+```
+
+now build application with Docker   
+first you need to create docker access tokens   
+Go to Jenkins Dashboard → Manage Jenkins → Manage Plugins.
+Search for "Docker Pipeline" and install/update it.
+Restart Jenkins after installation.   
+
+Your Jenkins pipeline must first build the JAR before attempting to copy it into the Docker image.
+```Jenkins
+stage('Build') {
+    steps {
+        sh 'mvn clean package -DskipTests'
+    }
+}
+
+stage('Build Docker Image') {
+    steps {
+        sh 'docker build -t shopping-cart -f docker/Dockerfile .'
+    }
+}
+
+```
+
+
