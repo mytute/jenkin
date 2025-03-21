@@ -179,3 +179,65 @@ stage('Build Docker Image') {
 ```
 
 
+```Jenkins
+pipeline {
+    agent any 
+    tools {
+        jdk 'jdk'
+        maven 'maven'
+    }
+    environment {
+        SCANNER_HOME=tool 'sonar-scanner'
+    }
+
+    stages {
+        stage('Git Checkout') {
+            steps {
+                git branch: 'main', changelog: false, credentialsId: 'coreset_token', poll: false, url: 'https://github.com/jaiswaladi246/Ekart.git'
+            }
+        }
+        stage('COMPILE') {
+            steps {
+                sh "mvn clean compile -DskipTests=true"
+            }
+        }
+        stage('OWASP Scan') {
+            steps {
+                dependencyCheck additionalArguments: '--scan ./ --format HTML', odcInstallation: 'DP'
+                dependencyCheckPublisher pattern: '**/dependency-check-report.xml'
+            }
+        }
+        stage('Sonarqube') {
+            steps {
+                withSonarQubeEnv('sonar-server') {
+                    sh ''' 
+                    $SCANNER_HOME/bin/sonar-scanner \
+                    -Dsonar.projectName=Shopping-Cart \
+                    -Dsonar.java.binaries=target/classes \
+                    -Dsonar.projectKey=Shopping-Cart
+                    '''
+                }
+            }
+        }
+        stage('Build') {
+            steps {
+                sh "mvn clean compile -DskipTests=true"
+            }
+        }
+
+        stage('Build Docker Image') {
+            steps {
+                script{
+                    withDockerRegistry(credentialsId: 'docker_hub', toolName: 'docker') {
+                        sh "docker build -t shopping-cart -f docker/Dockerfile ."
+                        sh "docker tag shopping-cart devmius/shopping-cart:latest"
+                        sh "docker push devmius/shopping-cart:latest"
+                    }
+                }
+            }
+        }
+    }
+}
+```
+
+
