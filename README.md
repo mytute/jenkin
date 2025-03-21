@@ -221,10 +221,14 @@ pipeline {
         }
         stage('Build') {
             steps {
-                sh "mvn clean compile -DskipTests=true"
+                sh "mvn clean package -DskipTests=true"
             }
         }
-
+        stage('Verify JAR') {
+            steps {
+                sh 'ls -lh target/'
+            }
+        }
         stage('Build Docker Image') {
             steps {
                 script{
@@ -236,6 +240,7 @@ pipeline {
                 }
             }
         }
+
     }
 }
 ```
