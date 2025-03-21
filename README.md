@@ -240,6 +240,24 @@ pipeline {
                 }
             }
         }
+        stage('Deploy') {
+            steps {
+                script{
+                    withDockerRegistry(credentialsId: 'docker_hub', toolName: 'docker') {
+                        // Stop and remove any existing container with the same name
+                        sh '''
+                        if [ "$(docker ps -aq -f name=shop-shop)" ]; then
+                            echo "Stopping and removing existing container..."
+                            docker stop shop-shop || true
+                            docker rm shop-shop || true
+                        fi
+                        '''
+                        // Run the new container
+                        sh "docker run -d --name shop-shop -p 8070:8070 devmius/shopping-cart:latest"
+                    }
+                }
+            }
+        }
 
     }
 }
